@@ -34,7 +34,8 @@ dotnet run
 После запуска API будет доступен на адресах, которые выводятся в консоль.
 
 ### Проверка
-- Тестовый эндпоинт: `GET /weatherforecast`
+- Проверка доступности сервиса: `GET /` или `GET /health`
+- Swagger UI (в Development): `GET /swagger`
 - Файл для быстрых запросов: `WarehouseAPI/WarehouseAPI.http`
 
 ### OpenAPI
