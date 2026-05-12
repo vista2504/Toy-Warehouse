@@ -19,7 +19,3 @@
 # OS
 Thumbs.db
 .DS_Store
-
-# Optional local env (keep secrets out of git)
-.env
-/WarehouseAPI/Controllers/ProductsController.cs
