@@ -1,5 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WarehouseAPI.Data;
+using WarehouseAPI.Repositories;
+using WarehouseAPI.Repositories.Interfaces;
+using WarehouseAPI.Services;
+using WarehouseAPI.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +12,10 @@ if (!string.IsNullOrWhiteSpace(connectionString))
 {
     builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 }
+
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
