@@ -14,8 +14,10 @@ if (!string.IsNullOrWhiteSpace(connectionString))
 }
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICounterpartyRepository, CounterpartyRepository>();
 
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICounterpartyService, CounterpartyService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
