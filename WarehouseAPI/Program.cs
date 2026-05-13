@@ -22,6 +22,9 @@ builder.Services.AddScoped<ICounterpartyService, CounterpartyService>();
 builder.Services.AddScoped<IOperationRepository, OperationRepository>();
 builder.Services.AddScoped<IOperationService, OperationService>();
 
+builder.Services.AddScoped<IStockRepository, StockRepository>();
+builder.Services.AddScoped<IStockService, StockService>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
