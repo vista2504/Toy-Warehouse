@@ -3,17 +3,46 @@ using WarehouseAPI.Models;
 
 namespace WarehouseAPI.DTOs.Operations;
 
-public class OperationCreateDto
+public class IncomeCreateDto
 {
-	[Required(ErrorMessage = "Тип операции обязателен")]
-	public OperationType Type { get; set; }  // Income / Sale / Transfer / WriteOff
+    public int? CounterpartyId { get; set; }  // поставщик (необязательно)
 
-	public int? CounterpartyId { get; set; }  // поставщик при приходе, клиент при продаже
+    [MaxLength(500)]
+    public string? Comment { get; set; }
 
-	[MaxLength(500)]
-	public string? Comment { get; set; }
+    [Required]
+    [MinLength(1, ErrorMessage = "Укажите хотя бы один товар")]
+    public List<OperationItemDto> Items { get; set; } = new();
+}
 
-	[Required]
-	[MinLength(1, ErrorMessage = "Операция должна содержать хотя бы один товар")]
-	public List<OperationItemDto> Items { get; set; } = new();
+public class SaleCreateDto
+{
+    public int? CounterpartyId { get; set; }  // клиент (необязательно)
+
+    [MaxLength(500)]
+    public string? Comment { get; set; }
+
+    [Required]
+    [MinLength(1, ErrorMessage = "Укажите хотя бы один товар")]
+    public List<OperationItemDto> Items { get; set; } = new();
+}
+
+public class TransferCreateDto
+{
+    [MaxLength(500)]
+    public string? Comment { get; set; }
+
+    [Required]
+    [MinLength(1, ErrorMessage = "Укажите хотя бы один товар")]
+    public List<OperationItemDto> Items { get; set; } = new();
+}
+
+public class WriteOffCreateDto
+{
+    [MaxLength(500)]
+    public string? Comment { get; set; }  // причина списания
+
+    [Required]
+    [MinLength(1, ErrorMessage = "Укажите хотя бы один товар")]
+    public List<OperationItemDto> Items { get; set; } = new();
 }
