@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Toy-Warehouse")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bc58b4698468dc0f5dc529fd47ebef256ad744c3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9b0703e55dffb4357a2764e60d2583065a173844")]
 [assembly: System.Reflection.AssemblyProductAttribute("Toy-Warehouse")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Toy-Warehouse")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
