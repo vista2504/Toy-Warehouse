@@ -19,9 +19,6 @@ builder.Services.AddScoped<ICounterpartyRepository, CounterpartyRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICounterpartyService, CounterpartyService>();
 
-builder.Services.AddScoped<IOperationRepository, OperationRepository>();
-builder.Services.AddScoped<IOperationService, OperationService>();
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
