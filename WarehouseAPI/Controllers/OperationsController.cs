@@ -35,59 +35,31 @@ public class OperationsController : ControllerBase
     [HttpPost("income")]
     public async Task<IActionResult> Income([FromBody] IncomeCreateDto dto)
     {
-        try
-        {
-            var result = await _operationService.IncomeAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _operationService.IncomeAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     // POST api/operations/sale
     [HttpPost("sale")]
     public async Task<IActionResult> Sale([FromBody] SaleCreateDto dto)
     {
-        try
-        {
-            var result = await _operationService.SaleAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _operationService.SaleAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     // POST api/operations/transfer
     [HttpPost("transfer")]
     public async Task<IActionResult> Transfer([FromBody] TransferCreateDto dto)
     {
-        try
-        {
-            var result = await _operationService.TransferAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _operationService.TransferAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     // POST api/operations/writeoff
     [HttpPost("writeoff")]
     public async Task<IActionResult> WriteOff([FromBody] WriteOffCreateDto dto)
     {
-        try
-        {
-            var result = await _operationService.WriteOffAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _operationService.WriteOffAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 }
