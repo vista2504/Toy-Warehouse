@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: warehouse_db
+      POSTGRES_USER: your_username
+      POSTGRES_PASSWORD: your_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    depends_on:
+      - postgres
+    environment:
+      - "ConnectionStrings:DefaultConnection=Host=postgres;Database=warehouse_db;Username=your_username;Password=your_password"
+    ports:
+      - "5000:80"
+    command: bash -c "dotnet ef database update && dotnet run --no-launch-profile"
+
+volumes:
+  postgres_data:

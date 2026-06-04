@@ -6,15 +6,19 @@ using WarehouseAPI.Repositories;
 using WarehouseAPI.Repositories.Interfaces;
 using WarehouseAPI.Services;
 using WarehouseAPI.Services.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Configuration.AddUserSecrets<Program>();
 
-// PostgreSQL — единственная поддерживаемая СУБД
+builder.Configuration.AddEnvironmentVariables();
+
+var connectionString = builder.Configuration["ConnectionStrings_DefaultConnection"];
+
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
-// CORS
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

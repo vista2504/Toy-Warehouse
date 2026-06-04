@@ -407,12 +407,103 @@ API будет доступен по адресам:
 
 ---
 
+## Запуск проекта с помощью Docker
+Чтобы быстро запустить проект в контейнерах, выполните следующие шаги:
+
+### 1. Убедитесь, что у вас установлены Docker и Docker Compose
+Инструкция по установке Docker
+Инструкция по установке Docker Compose
+### 2. Подготовьте docker-compose.yml и Dockerfile
+В корне проекта должны находиться файлы:
+docker-compose.yml (описание нескольких сервисов, например, базы данных и API)
+Dockerfile (описание сборки вашего приложения)
+Если эти файлы еще не созданы, ниже приведу их примеры.
+
+### 3. Пример docker-compose.yml
+
+```bash
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: warehouse_db
+      POSTGRES_USER: your_username
+      POSTGRES_PASSWORD: your_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    depends_on:
+      - postgres
+    environment:
+      - "ConnectionStrings:DefaultConnection=Host=postgres;Database=warehouse_db;Username=your_username;Password=your_password"
+    ports:
+      - "5000:80"
+
+volumes:
+  postgres_data:
+```
+### 4. Пример Dockerfile для ASP.NET Core проекта
+```dockerfile
+dockerfile
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
+COPY ["WarehouseAPI/WarehouseAPI.csproj", "WarehouseAPI/"]
+RUN dotnet restore "WarehouseAPI/WarehouseAPI.csproj"
+COPY . .
+WORKDIR "/src/WarehouseAPI"
+RUN dotnet build "WarehouseAPI.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "WarehouseAPI.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "WarehouseAPI.dll"]
+```
+Обязательно замените your_username и your_password на ваши данные.
+
+### 5. Запуск контейнеров
+В терминале, в папке с файлами, выполните команду:
+
+```bash
+docker-compose up -d
+```
+Это запустит ваше приложение и базу данных в фоновом режиме.
+
+### 6. Доступ к приложению
+После запуска API будет доступен по адресу:
+http://localhost:5000
+
+(или по тому порту, который вы указали).
+
+### 7. Остановка и удаление контейнеров
+Чтобы остановить:
+
+```bash
+docker-compose down
+```
+
+---
+
 ## Переменные окружения
 
-| Переменная | Описание |
+| Переменная | Описание | Формат заполнения
 |---|---|
 | `ASPNETCORE_ENVIRONMENT` | `Development` — включает Swagger и расширенные логи |
 | `ConnectionStrings__DefaultConnection` | Строка подключения к PostgreSQL |
+| `secret.env` | Файл, содержащий параметры входа вашей бдзаполнять самостоятельно |ConnectionStrings_DefaultConnection="Host=localhost;Port=your_port;Database=warehouse_db;Username=postgres;Password=your_password" |
 
 ---
 
@@ -434,3 +525,4 @@ API будет доступен по адресам:
 | `400` | Ошибка валидации DTO или бизнес-правил (нехватка остатка и т.д.) |
 | `404` | Запрошенный ресурс не найден |
 | `500` | Внутренняя ошибка сервера |
+
