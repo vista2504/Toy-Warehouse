@@ -5,12 +5,14 @@ REST API бэкенд для системы складского учёта. Р�
 ## Содержание
 
 - [Технологии](#технологии)
+- [Cистемные требования](#Системные-требования-для-«Складской-учёт»)
 - [Архитектура](#архитектура)
 - [Структура проекта](#структура-проекта)
 - [База данных](#база-данных)
 - [API — эндпоинты](#api--эндпоинты)
 - [Запуск проекта](#запуск-проекта)
 - [Переменные окружения](#переменные-окружения)
+- [Регламент действий администратора в случае ошибок](#Регламент-действий-администратора-в-случае)
 
 ---
 ## 🧭 Навигация (боковое меню)
@@ -42,7 +44,31 @@ REST API бэкенд для системы складского учёта. Р�
 
 ---
 
+## Системные требования для «Складской учёт»
+
+### Клиентское приложение (WinForms)
+- Windows 10 версии 1607 или новее
+- Процессор: 1.5 ГГц, 2 ядра
+- Оперативная память: 1 ГБ (рекомендуется 4 ГБ)
+- Свободное место: 500 МБ
+- Установленный .NET 8.0 Desktop Runtime
+- Разрешение экрана: 1024×768
+
+### Серверная часть
+- ASP.NET Core 8.0
+- PostgreSQL 15 или новее
+- 2 ГБ ОЗУ, 2 ядра CPU (минимально)
+- 10 ГБ свободного места на диске
+- Стабильное сетевое соединение
+
+### Сеть
+- HTTP/HTTPS доступ к API
+- Латентность не более 200 мс
+
+---
+
 ## Архитектура
+
 
 Проект построен по слоистой архитектуре с разделением ответственности:
 
@@ -499,11 +525,11 @@ docker-compose down
 
 ## Переменные окружения
 
-| Переменная | Описание | Формат заполнения
+| Переменная | Описание |
 |---|---|
 | `ASPNETCORE_ENVIRONMENT` | `Development` — включает Swagger и расширенные логи |
 | `ConnectionStrings__DefaultConnection` | Строка подключения к PostgreSQL |
-| `secret.env` | Файл, содержащий параметры входа вашей бдзаполнять самостоятельно |ConnectionStrings_DefaultConnection="Host=localhost;Port=your_port;Database=warehouse_db;Username=postgres;Password=your_password" |
+| `secret.env` | Файл, содержащий скрытые параметры входа к вашей бд. |
 
 ---
 
@@ -526,3 +552,94 @@ docker-compose down
 | `404` | Запрошенный ресурс не найден |
 | `500` | Внутренняя ошибка сервера |
 
+## Регламент действий администратора в случае
+
+### 🔴 Сценарий А: Упала база данных (PostgreSQL)
+#### Признаки:
+- API возвращает ошибки 500 Internal Server Error или Connection refused
+
+- WinForms клиент пишет: Не удалось подключиться к серверу
+
+- В логах API: Npgsql.NpgsqlException: Exception while connecting
+
+---
+#### Последовательность действий администратора:
+| Шаг |	Действие |	Команда / Проверка| Ожидаемый результат|
+|---|
+|1|	Проверить, работает ли служба PostgreSQL|	`sudo systemctl status postgresql` (Linux) `Get-Service postgresql*` (PowerShell)|	Должно быть running|
+|2|	Если служба остановлена — запустить	|`sudo systemctl start postgresql` `Start-Service postgresql`|	Служба запустилась|
+|3|	Проверить подключение к БД|	psql -h localhost -U postgres -d warehouse_db -c "SELECT 1"|	Должен вернуть ?column? → 1|
+|4|	Проверить, не блокирует ли фаервол порт 5432|	`telnet localhost 5432` Или `Test-NetConnection -Port 5432 localhost`|	Соединение устанавливается|
+|5|	Если не подключается — посмотреть логи|	sudo tail -100 /var/log/postgresql/postgresql-*.log	|Искать FATAL или ERROR|
+|6|	После восстановления — перезапустить API|	`docker compose restart api` (если в Docker) `sudo systemctl restart warehouse-api` (если как служба)|	API снова отвечает
+
+### Если PostgreSQL не запускается
+```bash
+# Шаг А1: Посмотреть подробную ошибку
+sudo journalctl -u postgresql -n 50 --no-pager
+
+
+# Шаг А2: Проверить целостность данных
+sudo -u postgres pg_checksums -c /var/lib/postgresql/data
+
+# Шаг А3: Попробовать запустить в одном пользовательском режиме (только для экспертов)
+sudo -u postgres postgres --single -D /var/lib/postgresql/data
+Крайний случай: восстановление из резервной копии
+Остановить API (чтобы не писались новые данные): docker compose stop api
+```
+### Восстановить БД из бэкапа:
+
+```bash
+gunzip -c backup.sql.gz | psql -U postgres -d warehouse_db
+```
+Запустить API: `docker compose start api`
+
+⚠️ Регулярно делайте бэкапы! Минимум — раз в день через pg_dump.
+
+### 💾 Сценарий Б: Переполнился диск
+#### Признаки
+- API падает с ошибкой No space left on device
+
+- WinForms клиент зависает при попытке сохранить операцию
+
+- PostgreSQL не может записывать данные и аварийно завершается
+
+- df -h показывает 100% использования на каком-то разделе
+
+### Последовательность действий администратора
+|Шаг	|Действие	|Команда	|Что ищем|
+|---|
+|1|	Определить, какой диск переполнен|	`df -h`|	Раздел с Use% = 100%|
+|2|	Найти самые большие папки|	`sudo du -sh /* 2>/dev/null -> sort -hr -> head -20`|	Логи, временные файлы, дампы|
+|3|	Очистить системные логи	sudo| `journalctl --vacuum-size=500M` (Linux systemd)| Или удалить старые .log в /var/log/	Освободить 500 МБ - 2 ГБ|
+|4|	Очистить логи PostgreSQL|	`sudo find /var/lib/postgresql/data/log -name "*.log" -mtime +7 -delete`|	Удалить логи старше 7 дней|
+|5|	Очистить логи вашего API|	`find /путь/к/логам/api -name "*.log" -mtime +7 -delete`|	Если вы пишете логи в файлы|
+|6|	Проверить Docker (если используете)|	`docker system prune -a -f`|	Удалить неиспользуемые образы, контейнеры, тома|
+|7|	Перезапустить PostgreSQL|	`sudo systemctl restart postgresql`|	Должен запуститься без ошибок|
+|8|	Перезапустить API|	`docker compose restart api`	|API отвечает на запросы|
+
+### Что делать, если очистка не помогла
+Вариант 1: Перенести данные PostgreSQL на другой диск:
+```
+# Остановить PostgreSQL
+sudo systemctl stop postgresql
+
+# Скопировать данные на новый диск
+sudo rsync -av /var/lib/postgresql/ /mnt/newdisk/postgresql/
+
+# Изменить конфиг на новый путь
+sudo nano /etc/postgresql/15/main/postgresql.conf
+# Изменить data_directory = '/mnt/newdisk/postgresql/15/main
+
+# Запустить PostgreSQL
+sudo systemctl start postgresql
+```
+### Вариант 2: Расширить диск (если виртуальная машина/облако) — через панель управления хостингом.
+
+### Профилактика переполнения диска
+|Что настроить|	Как|	Почему важно
+|---|
+|Ротация логов PostgreSQL|	В postgresql.conf: log_rotation_age = 1d, log_rotation_size = 100MB|Логи не разрастаются бесконтрольно|
+|Ротация логов вашего API|	Использовать Serilog с rolling file sink или настройки логирования в .NET|	Логи делятся по дням/размерам
+|Мониторинг свободного места|	df -h раз в день (через cron/Task Scheduler)|	Узнаете о проблеме до критического порога
+|Автоочистка Docker|	docker system prune -f раз в неделю в cron|	Docker volume — частая причина неожиданных "съеденных" гигабайт|
